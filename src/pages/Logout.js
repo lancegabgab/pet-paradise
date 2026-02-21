@@ -14,7 +14,7 @@ export default function Logout() {
       text: 'Are you sure you want to logout?',
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: 'Logout',
+      confirmButtonText: 'Yes',
       cancelButtonText: 'Cancel',
     }).then((result) => {
       if (result.isConfirmed) {
