@@ -1,6 +1,6 @@
 import { Form, Button, Container, Row, Col } from 'react-bootstrap';
 import { useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import UserContext from '../UserContext';
@@ -121,6 +121,11 @@ export default function Login() {
                 Submit
               </Button>
             )}
+            <div className="text-center mt-3">
+              <small>
+                No account yet? <Link to="/register">Register here</Link>
+              </small>
+            </div>
           </Form>
         </Col>
       </Row>
