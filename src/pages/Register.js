@@ -1,5 +1,6 @@
 import { Form, Button } from 'react-bootstrap';
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import '../style.css';
 import 'react-bootstrap';
@@ -251,6 +252,11 @@ export default function Register() {
             Please complete the form!
           </Button>
         )}
+        <div className="text-center mt-3">
+          <small>
+            Already have an account? <Link to="/">Login here</Link>
+          </small>
+        </div>
       </Form>
     </div>
   );
