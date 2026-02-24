@@ -48,7 +48,7 @@ const AppNavBar = () => {
               ) : (
                 <>
                   <Nav.Link as={NavLink} to="/products/users" id="fontColor1">
-                    Products
+                    Shop
                   </Nav.Link>
                   <Nav.Link as={NavLink} to="/cart" id="fontColor1">
                     Cart
