@@ -1,9 +1,9 @@
-import React from 'react';
+import { createContext } from "react";
 
-// UserContainer is a container for sharing data across components
-const UserContext = React.createContext();
+//for sharing data across components
+const UserContext = createContext();
 
-// UserProvider is a component that provides data to other components
+//provides data to other components
 export const UserProvider = UserContext.Provider;
 
 export default UserContext;
