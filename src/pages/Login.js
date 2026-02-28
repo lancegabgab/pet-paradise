@@ -89,12 +89,12 @@ export default function Login() {
       <Row className="justify-content-center">
         <Col xs={12} md={4}>
           <Form onSubmit={(e) => isActive && authenticate(e)}>
-            <h1 className="my-5 text-center">Login</h1>
+            <h1 className="my-5 text-center">Sign in</h1>
             <Form.Group controlId="userEmail">
               <Form.Label>Email address</Form.Label>
               <Form.Control
                 type="email"
-                placeholder="Enter email"
+                placeholder="Enter your email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -114,16 +114,16 @@ export default function Login() {
 
             {isActive ? (
               <Button variant="primary" type="submit" id="submitBtn">
-                Submit
+                Sign in
               </Button>
             ) : (
               <Button variant="danger" type="submit" id="submitBtn" disabled>
-                Submit
+                Sign in
               </Button>
             )}
             <div className="text-center mt-3">
               <small>
-                No account yet? <Link to="/register">Register here</Link>
+                No account yet? <Link to="/register">Sign up</Link>
               </small>
             </div>
           </Form>
