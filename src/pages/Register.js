@@ -1,11 +1,13 @@
 import { Form, Button } from 'react-bootstrap';
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import '../style.css';
-import 'react-bootstrap';
 
 export default function Register() {
+
+  const navigate = useNavigate();
+
   const [formFields, setFormFields] = useState({
     firstName: '',
     lastName: '',
@@ -15,90 +17,39 @@ export default function Register() {
     confirmPassword: '',
   });
 
-  const [formErrors, setFormErrors] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    mobileNo: '',
-    password: '',
-    confirmPassword: '',
-  });
-
+  const [formErrors, setFormErrors] = useState({});
   const [isActive, setIsActive] = useState(false);
 
+  const validateForm = () => {
+    let errors = {};
+
+    if (!formFields.firstName.trim())
+      errors.firstName = "First name is required";
+
+    if (!formFields.lastName.trim())
+      errors.lastName = "Last name is required";
+
+    if (!formFields.email.includes("@"))
+      errors.email = "Invalid email address";
+
+    if (formFields.mobileNo.length !== 11)
+      errors.mobileNo = "Mobile number must be 11 digits";
+
+    if (formFields.password.length < 8)
+      errors.password = "Password must be at least 8 characters";
+
+    if (formFields.password !== formFields.confirmPassword)
+      errors.confirmPassword = "Passwords do not match";
+
+    setFormErrors(errors);
+    setIsActive(Object.keys(errors).length === 0);
+  };
+
   useEffect(() => {
-    setFormErrors((prevErrors) => ({
-      ...prevErrors,
-      firstName: '',
-      lastName: '',
-      email: '',
-      mobileNo: '',
-      password: '',
-      confirmPassword: '',
-    }));
+    validateForm();
+  }, [formFields]);
 
-    if (
-      formFields.firstName !== '' &&
-      formFields.lastName !== '' &&
-      formFields.email !== '' &&
-      formFields.mobileNo !== '' &&
-      formFields.password !== '' &&
-      formFields.confirmPassword !== ''
-    ) {
-      if (!formFields.email.includes('@')) {
-        setFormErrors((prevErrors) => ({ ...prevErrors, email: 'Email must contain @' }));
-      }
-
-      if (formFields.mobileNo.length !== 11) {
-        setFormErrors((prevErrors) => ({ ...prevErrors, mobileNo: 'Mobile number must be 11 digits' }));
-      }
-
-      if (formFields.password.length < 8) {
-        setFormErrors((prevErrors) => ({ ...prevErrors, password: 'Password must be at least 8 characters' }));
-      }
-
-      if (formFields.password !== formFields.confirmPassword) {
-        setFormErrors((prevErrors) => ({ ...prevErrors, confirmPassword: 'Passwords must match' }));
-      } else {
-        setFormErrors((prevErrors) => ({ ...prevErrors, confirmPassword: '' }));
-      }
-
-      if (
-        formFields.email.includes('@') &&
-        formFields.mobileNo.length === 11 &&
-        formFields.password.length >= 8 &&
-        formFields.password === formFields.confirmPassword
-      ) {
-        setIsActive(true);
-      } else {
-        setIsActive(false);
-      }
-    } else {
-      setIsActive(false);
-
-      if (formFields.firstName === '') {
-        setFormErrors((prevErrors) => ({ ...prevErrors, firstName: 'First name cannot be empty' }));
-      }
-
-      if (formFields.lastName === '') {
-        setFormErrors((prevErrors) => ({ ...prevErrors, lastName: 'Last name cannot be empty' }));
-      }
-
-      if (formFields.email === '') {
-        setFormErrors((prevErrors) => ({ ...prevErrors, email: 'Email cannot be empty' }));
-      }
-
-      if (formFields.mobileNo === '') {
-        setFormErrors((prevErrors) => ({ ...prevErrors, mobileNo: 'Mobile number cannot be empty' }));
-      }
-
-      if (formFields.password === '') {
-        setFormErrors((prevErrors) => ({ ...prevErrors, password: 'Password cannot be empty' }));
-      }
-    }
-  }, [formFields.firstName, formFields.lastName, formFields.email, formFields.mobileNo, formFields.password, formFields.confirmPassword]);
-
-  function registerUser(event) {
+  const registerUser = (event) => {
     event.preventDefault();
 
     fetch(`${process.env.REACT_APP_API_URL}/users/`, {
@@ -112,151 +63,148 @@ export default function Register() {
         password: formFields.password,
       }),
     })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return res.json();
-      })
+      .then((res) => res.json())
       .then((data) => {
-        if (data.message === 'Registered Successfully') {
-          setFormFields({
-            firstName: '',
-            lastName: '',
-            email: '',
-            mobileNo: '',
-            password: '',
-            confirmPassword: '',
-          });
 
-          // SweetAlert2 for success
+        if (data.message === 'Registered Successfully') {
+
           Swal.fire({
             icon: 'success',
-            title: 'Registration Successful',
-            text: 'You have been successfully registered!',
+            title: 'Registration successful',
+            text: 'You can now sign in.',
+          }).then(() => {
+            navigate('/');
           });
+
         } else {
-          // SweetAlert2 for other registration errors
           Swal.fire({
             icon: 'error',
-            title: 'Registration Failed',
-            text: 'Something went wrong during registration. Please try again.',
+            title: 'Registration failed',
+            text: data.error || 'Something went wrong.',
           });
         }
-      })
-      .catch((error) => {
-        console.error('Error during registration:', error);
 
-        // SweetAlert2 for generic error
+      })
+      .catch(() => {
         Swal.fire({
           icon: 'error',
-          title: 'Error during registration',
-          text: 'An error occurred during registration. Please try again later.',
+          title: 'Error',
+          text: 'Server error. Please try again later.',
         });
       });
-  }
+  };
 
   return (
-    <div className="d-flex justify-content-center align-items-center bg-secondary py-4 ">
-      <Form onSubmit={(event) => registerUser(event)} className="bg-white p-3 rounded w-25 font-details">
-        <h1 className="mb-3 text-center font-highlight">Register</h1>
+    <div className="d-flex justify-content-center align-items-center bg-secondary py-5">
+      <Form onSubmit={registerUser} className="bg-white p-4 rounded w-25">
 
-        <Form.Group className="mb-2">
-          <Form.Label>First Name: </Form.Label>
+        <h1 className="mb-4 text-center">Create an account</h1>
+
+        <Form.Group className="mb-3">
+          <Form.Label>First name</Form.Label>
           <Form.Control
             type="text"
-            placeholder="Enter First Name"
-            required
-            onChange={(event) => setFormFields((prevFields) => ({ ...prevFields, firstName: event.target.value }))}
-            className="rounded-0 font-details"
+            placeholder="Enter your first name"
+            value={formFields.firstName}
+            onChange={(e) =>
+              setFormFields({ ...formFields, firstName: e.target.value })
+            }
           />
-          {formErrors.firstName && <div className="text-danger">{formErrors.firstName}</div>}
+          {formErrors.firstName && (
+            <small className="text-danger">{formErrors.firstName}</small>
+          )}
         </Form.Group>
 
-        <Form.Group className="mb-2">
-          <Form.Label>Last Name: </Form.Label>
+        <Form.Group className="mb-3">
+          <Form.Label>Last name</Form.Label>
           <Form.Control
             type="text"
-            placeholder="Enter Last Name"
-            required
-            onChange={(event) => setFormFields((prevFields) => ({ ...prevFields, lastName: event.target.value }))}
-            className="rounded-0 font-details"
+            placeholder="Enter your last name"
+            value={formFields.lastName}
+            onChange={(e) =>
+              setFormFields({ ...formFields, lastName: e.target.value })
+            }
           />
-          {formErrors.lastName && <div className="text-danger">{formErrors.lastName}</div>}
+          {formErrors.lastName && (
+            <small className="text-danger">{formErrors.lastName}</small>
+          )}
         </Form.Group>
 
-        <Form.Group className="mb-2">
-          <Form.Label>Email: </Form.Label>
+        <Form.Group className="mb-3">
+          <Form.Label>Email address</Form.Label>
           <Form.Control
             type="email"
-            placeholder="Enter Email"
-            required
-            onChange={(event) => setFormFields((prevFields) => ({ ...prevFields, email: event.target.value }))}
-            className="rounded-0 font-details"
+            placeholder="Enter your email address"
+            value={formFields.email}
+            onChange={(e) =>
+              setFormFields({ ...formFields, email: e.target.value })
+            }
           />
-          {formErrors.email && <div className="text-danger">{formErrors.email}</div>}
+          {formErrors.email && (
+            <small className="text-danger">{formErrors.email}</small>
+          )}
         </Form.Group>
 
-        <Form.Group className="mb-2">
-          <Form.Label>MobileNo: </Form.Label>
+        <Form.Group className="mb-3">
+          <Form.Label>Mobile number</Form.Label>
           <Form.Control
-            type="text"
-            placeholder="Enter MobileNo"
-            required
-            onChange={(event) => setFormFields((prevFields) => ({ ...prevFields, mobileNo: event.target.value }))}
-            className="rounded-0 font-details"
+            type="tel"
+            placeholder="Enter your mobile number"
+            value={formFields.mobileNo}
+            onChange={(e) =>
+              setFormFields({ ...formFields, mobileNo: e.target.value })
+            }
           />
-          {formErrors.mobileNo && <div className="text-danger">{formErrors.mobileNo}</div>}
+          {formErrors.mobileNo && (
+            <small className="text-danger">{formErrors.mobileNo}</small>
+          )}
         </Form.Group>
 
-        <Form.Group className="mb-2">
-          <Form.Label>Password: </Form.Label>
-          <Form.Control
-            type="password"
-            placeholder="Enter Password"
-            required
-            onChange={(event) => setFormFields((prevFields) => ({ ...prevFields, password: event.target.value }))}
-            className="rounded-0 font-details"
-          />
-          {formErrors.password && <div className="text-danger">{formErrors.password}</div>}
-        </Form.Group>
-
-        <Form.Group className="mb-2">
-          <Form.Label>Confirm Password: </Form.Label>
+        <Form.Group className="mb-3">
+          <Form.Label>Password</Form.Label>
           <Form.Control
             type="password"
-            placeholder="Confirm Password"
-            required
-            onChange={(event) => setFormFields((prevFields) => ({ ...prevFields, confirmPassword: event.target.value }))}
-            className="rounded-0 font-details"
+            placeholder="Create a password"
+            value={formFields.password}
+            onChange={(e) =>
+              setFormFields({ ...formFields, password: e.target.value })
+            }
           />
-          {formErrors.confirmPassword && <div className="text-danger">{formErrors.confirmPassword}</div>}
+          {formErrors.password && (
+            <small className="text-danger">{formErrors.password}</small>
+          )}
         </Form.Group>
 
-        {isActive === true ? (
-          <Button
-            type="submit"
-            id="submitBtn"
-            className="btn btn-success border rounded-0 font-details"
-          >
-            Submit
-          </Button>
-        ) : (
-          <Button
-            variant="danger"
-            type="submit"
-            id="submitBtn"
-            disabled
-            className="font-details"
-          >
-            Please complete the form!
-          </Button>
-        )}
+        <Form.Group className="mb-4">
+          <Form.Label>Confirm password</Form.Label>
+          <Form.Control
+            type="password"
+            placeholder="Confirm your password"
+            value={formFields.confirmPassword}
+            onChange={(e) =>
+              setFormFields({ ...formFields, confirmPassword: e.target.value })
+            }
+          />
+          {formErrors.confirmPassword && (
+            <small className="text-danger">{formErrors.confirmPassword}</small>
+          )}
+        </Form.Group>
+
+        <Button
+          type="submit"
+          variant="success"
+          disabled={!isActive}
+          className="w-100"
+        >
+          Sign up
+        </Button>
+
         <div className="text-center mt-3">
           <small>
-            Already have an account? <Link to="/">Login here</Link>
+            Already have an account? <Link to="/">Sign in</Link>
           </small>
         </div>
+
       </Form>
     </div>
   );
