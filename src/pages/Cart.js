@@ -1,8 +1,22 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { Container, Table, Button, Row, Col, Spinner } from 'react-bootstrap';
-import UserContext from '../UserContext';
-import 'sweetalert2/dist/sweetalert2.min.css';
-import Swal from 'sweetalert2';
+import { useContext, useEffect, useState } from "react";
+import {
+  Container,
+  Grid,
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  IconButton,
+  Box,
+  Divider,
+  CircularProgress,
+} from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
+import UserContext from "../UserContext";
+import Swal from "sweetalert2";
+import NoImage from '../images/NoImage.jpg';
 
 const Cart = () => {
   const { user } = useContext(UserContext);
@@ -15,15 +29,14 @@ const Cart = () => {
     setError(null);
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/cart/get-cart`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('access')}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch user cart. Status: ${response.status}`);
-      }
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL}/cart/get-cart`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access")}`,
+          },
+        }
+      );
 
       const { cart: fetchedCart } = await response.json();
 
@@ -32,9 +45,8 @@ const Cart = () => {
       } else {
         setCart([]);
       }
-    } catch (error) {
-      console.error('Error fetching user cart:', error);
-      setError('Failed to fetch user cart');
+    } catch (err) {
+      setError("Failed to fetch cart");
     } finally {
       setLoading(false);
     }
@@ -44,212 +56,208 @@ const Cart = () => {
     fetchUserCart();
   }, [user]);
 
-  const handleEditQuantity = async (productId, newQuantity) => {
-    setLoading(true);
-    setError(null);
+  const handleEditQuantity = (productId, newQuantity) => {
+    if (newQuantity < 1) return;
 
-    try {
-      setCart((prevCart) =>
-        prevCart.map((item) =>
-          item.productId === productId ? { ...item, quantity: newQuantity } : item
-        )
-      );
-    } catch (error) {
-      console.error('Error editing quantity:', error);
-      setError('Failed to edit item quantity in cart');
-    } finally {
-      setLoading(false);
-    }
+    setCart((prev) =>
+      prev.map((item) =>
+        item.productId === productId
+          ? { ...item, quantity: newQuantity }
+          : item
+      )
+    );
   };
 
   const handleRemoveProduct = async (productId) => {
-    try {
-      setLoading(true);
-
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/cart/${productId}/remove-from-cart`, {
-        method: 'DELETE',
+    await fetch(
+      `${process.env.REACT_APP_API_URL}/cart/${productId}/remove-from-cart`,
+      {
+        method: "DELETE",
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('access')}`,
+          Authorization: `Bearer ${localStorage.getItem("access")}`,
         },
-      });
-
-      if (response.ok) {
-        Swal.fire({
-          icon: 'success',
-          title: 'Successfully Removed',
-        });
-
-        // Update local state without fetching the entire cart
-        setCart((prevCart) => prevCart.filter((item) => item.productId !== productId));
       }
-    } catch (error) {
-      console.error('Error removing product from cart:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    );
 
-  const handleCheckout = async () => {
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/order/checkout`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('access')}`,
-        },
-        body: JSON.stringify({
-          productsOrdered: cart,
-        }),
-      });
+    setCart((prev) => prev.filter((item) => item.productId !== productId));
 
-      if (response.ok) {
-        const result = await response.json();
-        console.log('Order created successfully:', result);
-
-        Swal.fire({
-          icon: 'success',
-          title: 'Order Placed!',
-          text: 'Your order has been placed successfully.',
-        });
-
-        // Clear the local cart after successful checkout
-        setCart([]);
-      } else {
-        const error = await response.json();
-        console.error('Failed to create order:', error);
-
-        Swal.fire({
-          icon: 'error',
-          title: 'Oops...',
-          text: 'Failed to place the order. Please try again.',
-        });
-      }
-    } catch (error) {
-      console.error('Error in handleCheckout:', error);
-
-      Swal.fire({
-        icon: 'error',
-        title: 'Oops...',
-        text: 'An unexpected error occurred. Please try again later.',
-      });
-    }
+    Swal.fire("Removed!", "Item removed from cart", "success");
   };
 
   const handleClearCart = async () => {
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/cart/clear-cart`, {
-        method: 'DELETE',
+    await fetch(`${process.env.REACT_APP_API_URL}/cart/clear-cart`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access")}`,
+      },
+    });
+
+    setCart([]);
+    Swal.fire("Cleared!", "Cart has been cleared", "success");
+  };
+
+  const handleCheckout = async () => {
+    const response = await fetch(
+      `${process.env.REACT_APP_API_URL}/order/checkout`,
+      {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('access')}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("access")}`,
         },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log(data.message);
-
-        Swal.fire({
-          icon: 'success',
-          title: 'Cart Cleared',
-          text: 'Your cart has been successfully cleared!',
-        });
-
-        // Clear the local cart after successful clear
-        setCart([]);
-      } else {
-        const errorData = await response.json();
-        console.error('Error clearing cart:', errorData.message);
-
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Failed to clear cart. Please try again.',
-        });
+        body: JSON.stringify({ productsOrdered: cart }),
       }
-    } catch (error) {
-      console.error('Error clearing cart:', error.message);
+    );
 
-      Swal.fire({
-        icon: 'error',
-        title: 'Network Error',
-        text: 'Failed to connect to the server. Please check your internet connection.',
-      });
+    if (response.ok) {
+      setCart([]);
+      Swal.fire("Success!", "Order placed successfully!", "success");
+    } else {
+      Swal.fire("Error", "Checkout failed", "error");
     }
   };
 
-  const calculateSubtotal = (price, quantity) => {
-    return (price * quantity).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  };
-
   const calculateTotal = () => {
-    const cartItems = cart || [];
-    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
   };
 
   return (
-    <Container className="d-flex justify-content-center">
-      <Row className="w-100">
-        <Col>
-          <h2 className="text-center mt-3">Your Shopping Cart</h2>
+    <Container sx={{ mt: 5 }}>
+      <Typography variant="h4" align="center" gutterBottom>
+        Your Shopping Cart
+      </Typography>
 
-          {loading ? (
-            <div className="text-center">
-              <Spinner animation="border" role="status">
-                <span className="sr-only">Loading...</span>
-              </Spinner>
-            </div>
-          ) : null}
-          {error ? <p className="text-danger">Error: {error}</p> : null}
+      {loading && (
+        <Box textAlign="center" mt={2}>
+          <CircularProgress />
+        </Box>
+      )}
 
-          <Table striped bordered responsive>
-            <thead>
-              <tr>
-                <th className="text-center">Product</th>
-                <th className="text-center">Price</th>
-                <th className="text-center">Quantity</th>
-                <th className="text-center">Subtotal</th>
-                <th className="text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody>
+      {error && (
+        <Typography color="error" align="center">
+          {error}
+        </Typography>
+      )}
+
+      <Grid container spacing={4} mt={2}>
+        <Grid item xs={12} md={8}>
+          {cart.length === 0 ? (
+            <Card>
+              <CardContent>
+                <Typography align="center">
+                  Your cart is empty.
+                </Typography>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
               {cart.map((item) => (
-                <tr key={item.productId}>
-                  <td className="text-center">{item.productId}</td>
-                  <td className="text-center">{item.price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                  <td className="text-center">
-                    <input
-                      type="number"
-                      value={item.quantity}
-                      onChange={(e) => handleEditQuantity(item.productId, parseInt(e.target.value, 10) || 0)}
-                    />
-                  </td>
-                  <td className="text-center">{calculateSubtotal(item.price, item.quantity)}</td>
-                  <td className="text-center">
-                    <Button variant="danger" onClick={() => handleRemoveProduct(item.productId)}>
-                      Remove
-                    </Button>
-                  </td>
-                </tr>
+                <Card key={item.productId} sx={{ mb: 3 }}>
+                  <CardContent>
+                    <Grid container alignItems="center" spacing={2}>
+                      <Grid item xs={12} md={4}>
+                        <Typography fontWeight="bold">
+                          {item.productId}
+                        </Typography>
+                        <Typography color="text.secondary">
+                          ₱{item.price.toLocaleString("en-PH")}
+                        </Typography>
+                      </Grid>
+
+                      <Grid item xs={12} md={4}>
+                        <Box display="flex" alignItems="center">
+                          <IconButton
+                            onClick={() =>
+                              handleEditQuantity(
+                                item.productId,
+                                item.quantity - 1
+                              )
+                            }
+                          >
+                            <RemoveIcon />
+                          </IconButton>
+
+                          <Typography>{item.quantity}</Typography>
+
+                          <IconButton
+                            onClick={() =>
+                              handleEditQuantity(
+                                item.productId,
+                                item.quantity + 1
+                              )
+                            }
+                          >
+                            <AddIcon />
+                          </IconButton>
+                        </Box>
+                      </Grid>
+
+                      <Grid item xs={12} md={3}>
+                        <Typography>
+                          ₱
+                          {(item.price * item.quantity).toLocaleString(
+                            "en-PH"
+                          )}
+                        </Typography>
+                      </Grid>
+
+                      <Grid item xs={12} md={1}>
+                        <IconButton
+                          color="error"
+                          onClick={() =>
+                            handleRemoveProduct(item.productId)
+                          }
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Card>
               ))}
-            </tbody>
-          </Table>
 
-          <div className="d-flex space-between">
-            <Button variant="secondary" onClick={handleClearCart}>
-              Clear Cart
-            </Button>
-            <Button variant="primary" onClick={handleCheckout}>
-              Checkout
-            </Button>
-          </div>
+              <Button
+                variant="outlined"
+                color="error"
+                onClick={handleClearCart}
+              >
+                Clear Cart
+              </Button>
+            </>
+          )}
+        </Grid>
 
-          <div className="text-center">
-            <p>Total: {calculateTotal()}</p>
-          </div>
-        </Col>
-      </Row>
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Order Summary
+              </Typography>
+
+              <Divider sx={{ mb: 2 }} />
+
+              <Box display="flex" justifyContent="space-between">
+                <Typography>Total ({cart.length} items)</Typography>
+                <Typography fontWeight="bold">
+                  ₱{calculateTotal().toLocaleString("en-PH")}
+                </Typography>
+              </Box>
+
+              <Divider sx={{ my: 2 }} />
+
+              <Button
+                variant="contained"
+                fullWidth
+                size="large"
+                onClick={handleCheckout}
+                disabled={cart.length === 0}
+              >
+                Proceed to Checkout
+              </Button>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
     </Container>
   );
 };
