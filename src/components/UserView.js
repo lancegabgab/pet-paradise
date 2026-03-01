@@ -35,9 +35,8 @@ export default function UserView() {
       });
 
       const data = await res.json();
-
-      if (data?.product) {
-        setActiveProducts(data.product);
+      if (Array.isArray(data)) {
+        setActiveProducts(data);
       } else {
         setError('Invalid response structure');
       }
